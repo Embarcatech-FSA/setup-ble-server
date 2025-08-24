@@ -94,9 +94,9 @@ int main()
         btstack_run_loop_execute(); // Inicia o loop de execução principal do BTstack
     #else
         while (true) { // Loop infinito alternativo
-        printf("Teste de bluetooth - v2!\n");
-        sleep_ms(1000); // Aguarda 1 segundo
-    }
+            printf("Teste de bluetooth - v2!\n");
+            sleep_ms(1000); // Aguarda 1 segundo
+        }
     #endif
 
     return 0; // Finaliza o programa com sucesso

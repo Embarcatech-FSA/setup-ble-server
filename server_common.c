@@ -4,22 +4,22 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
- #include <stdio.h>
- #include "btstack.h"
- #include "pico/cyw43_arch.h"
- #include "pico/stdlib.h"
- #include "hardware/adc.h"
- 
- #include "lwip/netif.h"
- #include "lwip/ip4_addr.h"
- #include "lwip/apps/lwiperf.h"
- 
- #include "server_common.h"
- 
- #define HEARTBEAT_PERIOD_MS 1000
+#include <stdio.h>
+#include "btstack.h"
+#include "pico/cyw43_arch.h"
+#include "pico/stdlib.h"
+#include "hardware/adc.h"
+
+#include "lwip/netif.h"
+#include "lwip/ip4_addr.h"
+#include "lwip/apps/lwiperf.h"
+
+#include "server_common.h"
+
+#define HEARTBEAT_PERIOD_MS 1000
 
 const char WIFI_SSID[] = "your-ssid";
-const char WIFI_PASSWORD[] = "yourpassword";
+const char WIFI_PASSWORD[] = "your-password";
  
 static void heartbeat_handler(async_context_t *context, async_at_time_worker_t *worker);
 
