@@ -5,7 +5,8 @@
 #include "btstack.h"                // Biblioteca para manipulação da pilha Bluetooth (BTstack)
 #include "pico/btstack_cyw43.h"     // Biblioteca para integrar BTstack com CYW43
 #include "temp_sensor.h"            // Arquivo .gatt define a estrutura e os atributos de um perfil de dispositivo BLE
-
+#include "globals.h"
+#include "ssd1306.h"
 
 //Definições iniciais de execução
 #define ADC_CHANNEL_TEMPSENSOR 4
@@ -28,6 +29,9 @@ extern hci_con_handle_t con_handle;
 extern uint16_t current_temp;
 extern uint8_t const profile_data[];
 
+// variaveis globais
+ssd1306_t ssd;      // Inicializa a estrutura do display
+
 // Variáveis estáticas e estruturas usadas no programa
 static btstack_timer_source_t heartbeat; // Estrutura para gerenciar o temporizador
 static btstack_packet_callback_registration_t hci_event_callback_registration; // Registro de callback para eventos HCI (Host Controller Interface)
@@ -47,10 +51,16 @@ void poll_temp(void);
 // Função chamada a cada batimento cardíaco
 static void heartbeat_handler(struct btstack_timer_source *ts);
 
+void init_diplay();
+
 int main()
 {
     // Inicializa a entrada/saída padrão (printf, scanf, etc.)
     stdio_init_all(); 
+    init_diplay();
+
+    ssd1306_draw_string(&ssd, "Server BLE", 4, 4);
+    ssd1306_send_data(&ssd);
 
     // Inicializa o Periférico wifi - bluetooth / CYW43
     if (cyw43_arch_init()) { // Inicializa a arquitetura CYW43
@@ -104,6 +114,22 @@ int main()
 }
 
 //------------------------------------- Funções --------------------------------------------------------
+void init_diplay() {
+    // Canal I2C1 do Display funcionando em 400Khz.
+    i2c_init(I2C_PORT_DISP, 400 * 1000);
+    gpio_set_function(I2C_SDA_DISP, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_SCL_DISP, GPIO_FUNC_I2C);
+    gpio_pull_up(I2C_SDA_DISP);
+    gpio_pull_up(I2C_SCL_DISP);
+
+    ssd1306_init(&ssd, DISPLAY_WIDTH, DISPLAY_HEIGHT, false, DISPLAY_ADDRESS, I2C_PORT_DISP);
+    ssd1306_config(&ssd);
+    ssd1306_send_data(&ssd);
+
+    // Limpa o display
+    ssd1306_fill(&ssd, false);
+    ssd1306_send_data(&ssd);
+}
 
 uint16_t att_read_callback(hci_con_handle_t connection_handle, uint16_t att_handle, uint16_t offset, uint8_t * buffer, uint16_t buffer_size) {
     UNUSED(connection_handle);
@@ -185,15 +211,22 @@ void poll_temp(void) {
     float deg_c = 27 - (reading - 0.706) / 0.001721;
     current_temp = deg_c * 100;
     printf("Write temp %.2f degc\n", deg_c);
- }
 
- // Função chamada a cada batimento cardíaco
+    char str_msg[20];
+    snprintf(str_msg,  sizeof(str_msg),  "%.2f C", deg_c);
+
+    ssd1306_draw_string(&ssd, "Write temp:", 8, 20);
+    ssd1306_draw_string(&ssd, str_msg, 8, 40);
+    ssd1306_send_data(&ssd);
+}
+
+// Função chamada a cada batimento cardíaco
 static void heartbeat_handler(struct btstack_timer_source *ts) {
     static uint32_t counter = 0; // Contador para rastrear os ciclos do temporizador
     counter++; // Incrementa o contador
 
-    // Atualiza a temperatura a cada 10 batimentos
-    if (counter % 10 == 0) {
+    // Atualiza a temperatura a cada 3 batimentos
+    if (counter % 3 == 0) {
         poll_temp(); // Função para ler a temperatura
         if (le_notification_enabled) { // Verifica se notificações estão habilitadas
             att_server_request_can_send_now_event(con_handle); // Solicita permissão para enviar dados

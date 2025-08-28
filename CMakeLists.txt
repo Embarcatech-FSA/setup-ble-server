@@ -35,7 +35,13 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(server server.c)
+include_directories(${CMAKE_SOURCE_DIR}/lib/include) # Inclui os files .h na pasta lib
+include_directories(${CMAKE_SOURCE_DIR}/lib/include/ssd1306) # Inclui os files .h na
+
+add_executable(server 
+    server.c
+    lib/source/ssd1306.c
+    )
 
 pico_set_program_name(server "server")
 pico_set_program_version(server "0.1")
@@ -52,7 +58,9 @@ target_link_libraries(server
         pico_btstack_ble
         hardware_adc
         pico_lwip_iperf
-        pico_cyw43_arch_lwip_threadsafe_background)
+        pico_cyw43_arch_lwip_threadsafe_background
+        hardware_i2c
+        )
 
 # Add the standard include files to the build
 target_include_directories(server PRIVATE
